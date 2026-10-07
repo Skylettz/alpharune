@@ -11,25 +11,31 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Enable long paths
+        shell: pwsh
+        run: |
+          git config --system core.longpaths true
+
       - name: Configure
         shell: pwsh
         run: |
-          cmake -B build -G "Visual Studio 17 2022" -A x64 `
+          cmake -B C:\b -G "Visual Studio 17 2022" -A x64 `
             -DCMAKE_CXX_STANDARD=20 `
             -DRIFTBOUND_BUILD_OPENSPIEL=ON `
-            -DRIFTBOUND_BUILD_LIBTORCH=OFF
+            -DRIFTBOUND_BUILD_LIBTORCH=OFF `
+            -DFETCHCONTENT_BASE_DIR=C:\fc
 
       - name: Build
         shell: pwsh
         run: |
-          cmake --build build --config Release --target riftbound --parallel
+          cmake --build C:\b --config Release --target riftbound --parallel
 
       - name: Package
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path package
 
-          Copy-Item build\Release\riftbound.exe package\
+          Copy-Item C:\b\Release\riftbound.exe package\
 
           Copy-Item decks package\decks -Recurse
           Copy-Item cards package\cards -Recurse
