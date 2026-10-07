@@ -9,31 +9,20 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install dependencies with vcpkg
-        shell: pwsh
-        run: |
-          git clone --depth 1 https://github.com/microsoft/vcpkg.git
-          .\vcpkg\bootstrap-vcpkg.bat
-          .\vcpkg\vcpkg.exe install `
-            boost-program-options:x64-windows `
-            boost-filesystem:x64-windows `
-            boost-system:x64-windows `
-            boost-context:x64-windows `
-            nlohmann-json:x64-windows
+        uses: actions/checkout@v5
 
       - name: Configure
         shell: pwsh
         run: |
-          cmake -B build `
-            -DCMAKE_BUILD_TYPE=Release `
-            -DCMAKE_TOOLCHAIN_FILE="$env:GITHUB_WORKSPACE\vcpkg\scripts\buildsystems\vcpkg.cmake"
+          cmake -B build -G "Visual Studio 17 2022" -A x64 `
+            -DCMAKE_CXX_STANDARD=20 `
+            -DRIFTBOUND_BUILD_OPENSPIEL=ON `
+            -DRIFTBOUND_BUILD_LIBTORCH=OFF
 
       - name: Build
         shell: pwsh
         run: |
-          cmake --build build --config Release --target riftbound
+          cmake --build build --config Release --target riftbound --parallel
 
       - name: Package
         shell: pwsh
@@ -46,13 +35,9 @@ jobs:
           Copy-Item cards package\cards -Recurse
           Copy-Item rules package\rules -Recurse
 
-          if (Test-Path vcpkg_installed\x64-windows\bin) {
-            Copy-Item vcpkg_installed\x64-windows\bin\*.dll package\ -ErrorAction SilentlyContinue
-          }
-
           Compress-Archive -Path package\* -DestinationPath Riftbound-Windows.zip
 
-      - name: Upload Windows build
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: Riftbound-Windows
